@@ -66,6 +66,38 @@ describe('Value autodiff engine', () => {
     expect(b.grad).toBeCloseTo(dTanh * 2);
   });
 
+  it('matches the analytic derivative of sub and neg', () => {
+    const x = new Value(5);
+    const y = new Value(2);
+    const out = x.sub(y); // x - y
+    out.backward();
+
+    // d(x - y)/dx = 1, d(x - y)/dy = -1
+    expect(out.data).toBeCloseTo(3);
+    expect(x.grad).toBeCloseTo(1);
+    expect(y.grad).toBeCloseTo(-1);
+  });
+
+  it('matches the analytic derivative of div', () => {
+    const x = new Value(6);
+    const y = new Value(3);
+    const out = x.div(y); // x / y
+    out.backward();
+
+    // d(x/y)/dx = 1/y, d(x/y)/dy = -x/y^2
+    expect(out.data).toBeCloseTo(2);
+    expect(x.grad).toBeCloseTo(1 / 3);
+    expect(y.grad).toBeCloseTo(-6 / 9);
+  });
+
+  it('accepts a raw number as the other operand for every binary op', () => {
+    const x = new Value(4);
+    expect(x.add(1).data).toBeCloseTo(5);
+    expect(x.mul(2).data).toBeCloseTo(8);
+    expect(x.sub(1).data).toBeCloseTo(3);
+    expect(x.div(2).data).toBeCloseTo(2);
+  });
+
   it('zeroGrad resets this node and all of its ancestors', () => {
     const x = new Value(1);
     const out = x.mul(2);
