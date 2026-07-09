@@ -111,3 +111,33 @@ describe('recomputeAndDraw ripple wiring', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+describe('keyboard access to the neuron tooltip', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    drawHeatmapMock.mockClear();
+    document.body.innerHTML = '<div id="app"></div>';
+  });
+
+  it('makes the canvas focusable', async () => {
+    await import('./main');
+    const canvas = document.querySelector('canvas');
+    expect(canvas?.tabIndex).toBe(0);
+  });
+
+  it('reveals a neuron gradient tooltip via arrow keys and dismisses it on Escape', async () => {
+    await import('./main');
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
+    if (!canvas) throw new Error('expected a canvas element');
+    stubCanvasRect(canvas, 400, 300);
+
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+
+    const tooltip = document.querySelector<HTMLElement>('.edge-tooltip');
+    expect(tooltip?.hidden).toBe(false);
+    expect(tooltip?.textContent).toMatch(/∂/);
+
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(tooltip?.hidden).toBe(true);
+  });
+});
