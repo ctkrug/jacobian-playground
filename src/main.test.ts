@@ -8,6 +8,13 @@ vi.mock('./viz/heatmap', async () => {
   return { ...actual, drawHeatmap: drawHeatmapMock };
 });
 
+/** Nudges a slider so recomputeAndDraw re-reads canvas.getBoundingClientRect() after it's stubbed. */
+function forceRecompute(): void {
+  const slider = document.querySelector<HTMLInputElement>('input[aria-label="x0"]');
+  if (!slider) throw new Error('expected an x0 slider in the mounted controls panel');
+  slider.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function stubCanvasRect(canvas: HTMLCanvasElement, width: number, height: number): void {
   vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
     width,
@@ -175,6 +182,67 @@ describe('keyboard access to the neuron tooltip', () => {
     expect(tooltip?.hidden).toBe(false);
 
     canvas.dispatchEvent(new FocusEvent('blur'));
+    expect(tooltip?.hidden).toBe(true);
+  });
+});
+
+describe('mouse hover interactions', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    drawHeatmapMock.mockClear();
+    document.body.innerHTML = '<div id="app"></div>';
+  });
+
+  it('shows the edge tooltip when hovering a connection between two neurons', async () => {
+    await import('./main');
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
+    if (!canvas) throw new Error('expected a canvas element');
+    stubCanvasRect(canvas, 400, 300);
+    forceRecompute();
+
+    const positions = computeLayout(400, 300, [5, 4, 3]);
+    const midpoint = {
+      x: (positions[0][0].x + positions[1][0].x) / 2,
+      y: (positions[0][0].y + positions[1][0].y) / 2,
+    };
+    canvas.dispatchEvent(new MouseEvent('mousemove', { clientX: midpoint.x, clientY: midpoint.y, bubbles: true }));
+
+    const tooltip = document.querySelector<HTMLElement>('.edge-tooltip');
+    expect(tooltip?.hidden).toBe(false);
+    expect(tooltip?.textContent).toMatch(/w .* ∂ .* J /);
+  });
+
+  it('clears the hover highlight and tooltip once the cursor leaves every node/edge', async () => {
+    await import('./main');
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
+    if (!canvas) throw new Error('expected a canvas element');
+    stubCanvasRect(canvas, 400, 300);
+    forceRecompute();
+
+    const positions = computeLayout(400, 300, [5, 4, 3]);
+    const nodePos = positions[0][0];
+    canvas.dispatchEvent(new MouseEvent('mousemove', { clientX: nodePos.x, clientY: nodePos.y, bubbles: true }));
+    const tooltip = document.querySelector<HTMLElement>('.edge-tooltip');
+    expect(tooltip?.hidden).toBe(false);
+
+    canvas.dispatchEvent(new MouseEvent('mousemove', { clientX: 399, clientY: 299, bubbles: true }));
+    expect(tooltip?.hidden).toBe(true);
+  });
+
+  it('hides the tooltip and clears the hover highlight on mouseleave', async () => {
+    await import('./main');
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
+    if (!canvas) throw new Error('expected a canvas element');
+    stubCanvasRect(canvas, 400, 300);
+    forceRecompute();
+
+    const positions = computeLayout(400, 300, [5, 4, 3]);
+    const nodePos = positions[0][0];
+    canvas.dispatchEvent(new MouseEvent('mousemove', { clientX: nodePos.x, clientY: nodePos.y, bubbles: true }));
+    const tooltip = document.querySelector<HTMLElement>('.edge-tooltip');
+    expect(tooltip?.hidden).toBe(false);
+
+    canvas.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
     expect(tooltip?.hidden).toBe(true);
   });
 });
