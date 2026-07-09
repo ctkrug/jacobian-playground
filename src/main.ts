@@ -1,6 +1,7 @@
 import './style.css';
 import { MLP } from './nn/network';
 import { drawHeatmap, type HeatmapLayer } from './viz/heatmap';
+import { buildHybridLayers, scheduleRipple, type RippleHandle } from './viz/ripple';
 import { createSliderPanel } from './viz/controls';
 
 const NUM_INPUTS = 3;
@@ -35,6 +36,13 @@ const controlsEl = app.querySelector<HTMLElement>('.controls');
 if (!canvasEl || !controlsEl) throw new Error('expected stage canvas and controls panel');
 const canvas: HTMLCanvasElement = canvasEl;
 
+let prevLayers: HeatmapLayer[] = [];
+let pendingRipple: RippleHandle | null = null;
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+}
+
 function recomputeAndDraw(): void {
   // Weights persist across calls, so their accumulated .grad from the
   // previous pass must be cleared before the next backward().
@@ -48,8 +56,20 @@ function recomputeAndDraw(): void {
   // network visualizes.
   trace.outputs[0].backward();
 
-  const layers: HeatmapLayer[] = trace.layerActivations.map((neurons) => ({ neurons }));
-  drawHeatmap(canvas, layers);
+  const nextLayers: HeatmapLayer[] = trace.layerActivations.map((neurons) => ({ neurons }));
+
+  // A drag can outrun a previous ripple; drop its pending frames so the
+  // heatmap always converges on the latest input rather than showing a
+  // stale in-between frame.
+  pendingRipple?.cancel();
+  pendingRipple = scheduleRipple(
+    nextLayers.length,
+    (revealedThrough) => {
+      drawHeatmap(canvas, buildHybridLayers(prevLayers, nextLayers, revealedThrough));
+    },
+    { reducedMotion: prefersReducedMotion() },
+  );
+  prevLayers = nextLayers;
 }
 
 const sliderPanel = createSliderPanel(
