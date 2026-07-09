@@ -215,6 +215,71 @@ canvas.addEventListener('mouseleave', () => {
   }
 });
 
+// The mouse-hover tooltip above has no keyboard equivalent otherwise — arrow
+// keys step a focus cursor between neurons so the same gradient readout is
+// reachable without a pointer.
+canvas.tabIndex = 0;
+canvas.setAttribute('role', 'img');
+canvas.setAttribute(
+  'aria-label',
+  "Network gradient heatmap. Focus and use arrow keys to inspect each neuron's gradient; Escape to dismiss.",
+);
+let keyboardNode = { layerIndex: 0, neuronIndex: 0 };
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function moveKeyboardFocus(deltaLayer: number, deltaNeuron: number): void {
+  if (currentPositions.length === 0) return;
+  const layerIndex = clamp(keyboardNode.layerIndex + deltaLayer, 0, currentPositions.length - 1);
+  const neuronIndex = clamp(keyboardNode.neuronIndex + deltaNeuron, 0, currentPositions[layerIndex].length - 1);
+  keyboardNode = { layerIndex, neuronIndex };
+
+  const position = currentPositions[layerIndex][neuronIndex];
+  hoveredNode = { layerIndex, neuronIndex, position };
+  edgeTooltip.showText(formatNodeText(prevLayers[layerIndex].neurons[neuronIndex].grad), position.x + 12, position.y + 12);
+  drawHeatmap(canvas, lastRenderedLayers, { hoveredNode });
+}
+
+canvas.addEventListener('keydown', (event) => {
+  switch (event.key) {
+    case 'ArrowRight':
+      event.preventDefault();
+      moveKeyboardFocus(1, 0);
+      break;
+    case 'ArrowLeft':
+      event.preventDefault();
+      moveKeyboardFocus(-1, 0);
+      break;
+    case 'ArrowDown':
+      event.preventDefault();
+      moveKeyboardFocus(0, 1);
+      break;
+    case 'ArrowUp':
+      event.preventDefault();
+      moveKeyboardFocus(0, -1);
+      break;
+    case 'Escape':
+      edgeTooltip.hide();
+      if (hoveredNode) {
+        hoveredNode = null;
+        drawHeatmap(canvas, lastRenderedLayers, { hoveredNode });
+      }
+      break;
+    default:
+      break;
+  }
+});
+
+canvas.addEventListener('blur', () => {
+  edgeTooltip.hide();
+  if (hoveredNode) {
+    hoveredNode = null;
+    drawHeatmap(canvas, lastRenderedLayers, { hoveredNode });
+  }
+});
+
 window.addEventListener('resize', recomputeAndDraw);
 
 recomputeAndDraw();
