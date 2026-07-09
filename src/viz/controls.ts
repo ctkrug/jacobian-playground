@@ -99,3 +99,39 @@ export function createOutputSelector(labels: string[], selectedIndex: number): O
     },
   };
 }
+
+export interface ActionButtonSpec {
+  id: string;
+  label: string;
+}
+
+export interface ActionButtons {
+  element: HTMLElement;
+  onClick(handler: (id: string) => void): void;
+}
+
+/** Builds a themed row of action buttons (e.g. randomize/reset weights). */
+export function createActionButtons(specs: ActionButtonSpec[]): ActionButtons {
+  const container = document.createElement('div');
+  container.className = 'action-buttons';
+
+  const listeners: Array<(id: string) => void> = [];
+
+  specs.forEach((spec) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'action-buttons__button';
+    button.textContent = spec.label;
+    button.addEventListener('click', () => {
+      listeners.forEach((fn) => fn(spec.id));
+    });
+    container.appendChild(button);
+  });
+
+  return {
+    element: container,
+    onClick(handler) {
+      listeners.push(handler);
+    },
+  };
+}
