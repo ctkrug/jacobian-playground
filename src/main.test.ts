@@ -140,4 +140,41 @@ describe('keyboard access to the neuron tooltip', () => {
     canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(tooltip?.hidden).toBe(true);
   });
+
+  it('moves the focus cursor down/up within a layer and clamps left of the first layer', async () => {
+    await import('./main');
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
+    if (!canvas) throw new Error('expected a canvas element');
+    stubCanvasRect(canvas, 400, 300);
+    const tooltip = document.querySelector<HTMLElement>('.edge-tooltip');
+
+    // Already on layer 0; ArrowLeft should clamp rather than go out of bounds.
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    const afterLeft = tooltip?.textContent;
+
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    const afterDown = tooltip?.textContent;
+    expect(afterDown).toMatch(/∂/);
+    expect(afterDown).not.toBe(afterLeft);
+
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(tooltip?.textContent).toBe(afterLeft);
+  });
+
+  it('ignores unrelated keys and hides the tooltip on blur', async () => {
+    await import('./main');
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
+    if (!canvas) throw new Error('expected a canvas element');
+    stubCanvasRect(canvas, 400, 300);
+    const tooltip = document.querySelector<HTMLElement>('.edge-tooltip');
+
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+    expect(tooltip?.hidden).toBe(true);
+
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(tooltip?.hidden).toBe(false);
+
+    canvas.dispatchEvent(new FocusEvent('blur'));
+    expect(tooltip?.hidden).toBe(true);
+  });
 });
