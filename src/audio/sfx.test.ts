@@ -194,4 +194,29 @@ describe('SfxEngine', () => {
       if (original) Object.defineProperty(window, 'localStorage', original);
     }
   });
+
+  it('constructs a real AudioContext via the default factory when the browser provides one', () => {
+    const created: unknown[] = [];
+    class FakeAudioContext {
+      currentTime = 0;
+      destination = {};
+      constructor() {
+        created.push(this);
+      }
+      createOscillator(): MinimalOscillator {
+        return { type: 'sine', frequency: { value: 0 }, connect: vi.fn(), start: vi.fn(), stop: vi.fn() };
+      }
+      createGain(): MinimalGain {
+        return { gain: { value: 0 }, connect: vi.fn() };
+      }
+    }
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+
+    const engine = new SfxEngine({ storage: fakeStorage() });
+    engine.play('pop');
+
+    expect(created).toHaveLength(1);
+
+    vi.unstubAllGlobals();
+  });
 });
