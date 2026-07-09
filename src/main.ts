@@ -1,7 +1,10 @@
 import './style.css';
 import { MLP } from './nn/network';
-import { drawHeatmap, type HeatmapLayer } from './viz/heatmap';
+import type { Value } from './autodiff/value';
+import { computeLayout, drawHeatmap, type HeatmapLayer, type NodePosition } from './viz/heatmap';
 import { buildHybridLayers, scheduleRipple, type RippleHandle } from './viz/ripple';
+import { findNearestEdge, type EdgeInfo } from './viz/edges';
+import { createEdgeTooltip } from './viz/tooltip';
 import { createActionButtons, createOutputSelector, createSliderPanel } from './viz/controls';
 
 const NUM_INPUTS = 3;
@@ -33,16 +36,40 @@ app.innerHTML = `
 `;
 
 const canvasEl = app.querySelector<HTMLCanvasElement>('canvas');
+const stageEl = app.querySelector<HTMLElement>('.stage');
 const controlsEl = app.querySelector<HTMLElement>('.controls');
-if (!canvasEl || !controlsEl) throw new Error('expected stage canvas and controls panel');
+if (!canvasEl || !stageEl || !controlsEl) throw new Error('expected stage canvas and controls panel');
 const canvas: HTMLCanvasElement = canvasEl;
 
 let prevLayers: HeatmapLayer[] = [];
 let pendingRipple: RippleHandle | null = null;
 let backpropTarget = 0;
+let currentEdges: EdgeInfo[] = [];
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+}
+
+/** Rebuilds the edge list (for hover tooltips) from each connection's weight and upstream gradient. */
+function buildEdges(positions: NodePosition[][], layerActivations: Value[][]): EdgeInfo[] {
+  const edges: EdgeInfo[] = [];
+  for (let li = 1; li < positions.length; li += 1) {
+    const prevPositions = positions[li - 1];
+    const currPositions = positions[li];
+    const prevActivations = layerActivations[li - 1];
+    network.layers[li].neurons.forEach((neuron, k) => {
+      neuron.weights.forEach((w, j) => {
+        edges.push({
+          from: prevPositions[j],
+          to: currPositions[k],
+          weight: w.data,
+          upstreamGrad: prevActivations[j].grad,
+          jacobianEntry: w.data * prevActivations[j].grad,
+        });
+      });
+    });
+  }
+  return edges;
 }
 
 function recomputeAndDraw(): void {
@@ -59,6 +86,12 @@ function recomputeAndDraw(): void {
   trace.outputs[backpropTarget].backward();
 
   const nextLayers: HeatmapLayer[] = trace.layerActivations.map((neurons) => ({ neurons }));
+
+  const rect = canvas.getBoundingClientRect();
+  currentEdges = buildEdges(
+    computeLayout(rect.width, rect.height, nextLayers.map((l) => l.neurons.length)),
+    nextLayers.map((l) => l.neurons),
+  );
 
   // A drag can outrun a previous ripple; drop its pending frames so the
   // heatmap always converges on the latest input rather than showing a
@@ -114,6 +147,22 @@ actionButtons.onClick((id) => {
   recomputeAndDraw();
 });
 controlsEl.appendChild(actionButtons.element);
+
+const edgeTooltip = createEdgeTooltip();
+stageEl.appendChild(edgeTooltip.element);
+
+canvas.addEventListener('mousemove', (event) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const nearest = findNearestEdge(currentEdges, x, y);
+  if (nearest) {
+    edgeTooltip.show(nearest, x + 12, y + 12);
+  } else {
+    edgeTooltip.hide();
+  }
+});
+canvas.addEventListener('mouseleave', () => edgeTooltip.hide());
 
 window.addEventListener('resize', recomputeAndDraw);
 
