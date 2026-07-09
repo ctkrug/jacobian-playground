@@ -109,10 +109,15 @@ function recomputeAndDraw(): void {
   // heatmap always converges on the latest input rather than showing a
   // stale in-between frame.
   pendingRipple?.cancel();
+  // Snapshot the outgoing frame before prevLayers is reassigned below — the
+  // ripple's callbacks fire asynchronously, by which point the module-level
+  // prevLayers would otherwise already equal nextLayers and the "hybrid"
+  // frames would show every layer as fully revealed from the first tick.
+  const outgoingLayers = prevLayers;
   pendingRipple = scheduleRipple(
     nextLayers.length,
     (revealedThrough) => {
-      drawHeatmap(canvas, buildHybridLayers(prevLayers, nextLayers, revealedThrough));
+      drawHeatmap(canvas, buildHybridLayers(outgoingLayers, nextLayers, revealedThrough));
     },
     { reducedMotion: prefersReducedMotion() },
   );
