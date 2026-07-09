@@ -203,3 +203,40 @@ input[type='range']::-moz-range-thumb {
 input[type='range']:focus-visible {
   box-shadow: 0 0 0 3px rgba(79, 209, 255, 0.4);
 }
+
+.output-selector {
+  margin-top: var(--space-2);
+}
+
+.output-selector__select {
+  appearance: none;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%234fd1ff' d='M4 6l4 4 4-4'/%3E%3C/svg%3E") no-repeat right var(--space-3) center;
+  border: 1px solid rgba(79, 209, 255, 0.25);
+  border-radius: var(--radius);
+  outline: none;
+  cursor: pointer;
+  transition: box-shadow var(--transition-ui), border-color var(--transition-ui);
+}
+
+.output-selector__select:hover {
+  border-color: var(--accent);
+}
+
+.output-selector__select:focus-visible {
+  box-shadow: var(--glow-accent);
+  border-color: var(--accent);
+}
+
+.output-selector__select:active {
+  box-shadow: 0 0 0 2px rgba(79, 209, 255, 0.3);
+}
+
+.output-selector__select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
