@@ -45,6 +45,25 @@ See [`docs/BACKLOG.md`](docs/BACKLOG.md) for the full epic/story breakdown and
   derivatives, not just "it runs").
 - Zero ML libraries. The autodiff engine and network are original code.
 
+## Architecture
+
+- `src/autodiff/value.ts` — the entire autodiff engine: a scalar `Value`
+  class where every operator builds a graph node that knows how to push a
+  gradient to its operands. `backward()` topologically sorts the graph from
+  a chosen node and fans gradients out in reverse.
+- `src/nn/network.ts` — `Neuron`/`Layer`/`MLP` wrap `Value` nodes directly,
+  so a single `.backward()` call from any output neuron populates `.grad`
+  on every upstream neuron and input — that gradient *is* the Jacobian
+  entry the heatmap renders.
+- `src/viz/heatmap.ts` — a `devicePixelRatio`-aware canvas renderer that
+  colors each neuron on a diverging cold/neutral/hot scale keyed off its
+  `.grad`.
+- `src/viz/controls.ts` — the themed slider panel; each drag triggers a
+  fresh forward+backward pass and a full repaint.
+- `src/main.ts` — wires the above together into the running app.
+
+See [`docs/VISION.md`](docs/VISION.md) for the full rationale.
+
 ## Getting started
 
 ```bash
