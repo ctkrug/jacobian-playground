@@ -1,0 +1,79 @@
+import { describe, expect, it } from 'vitest';
+import { Value } from './value';
+
+describe('Value autodiff engine', () => {
+  it('computes d/dx and d/dy for x*y + x', () => {
+    const x = new Value(3);
+    const y = new Value(-4);
+    const out = x.mul(y).add(x);
+    out.backward();
+
+    // d(xy + x)/dx = y + 1, d(xy + x)/dy = x
+    expect(x.grad).toBeCloseTo(-4 + 1);
+    expect(y.grad).toBeCloseTo(3);
+    expect(out.data).toBeCloseTo(3 * -4 + 3);
+  });
+
+  it('matches the analytic derivative of pow', () => {
+    const x = new Value(5);
+    const out = x.pow(3);
+    out.backward();
+
+    // d(x^3)/dx = 3x^2
+    expect(x.grad).toBeCloseTo(3 * 5 ** 2);
+  });
+
+  it('matches the analytic derivative of tanh', () => {
+    const x = new Value(0.5);
+    const out = x.tanh();
+    out.backward();
+
+    const t = Math.tanh(0.5);
+    expect(x.grad).toBeCloseTo(1 - t * t);
+  });
+
+  it('matches the analytic derivative of relu on both sides of zero', () => {
+    const positive = new Value(2);
+    positive.relu().backward();
+    expect(positive.grad).toBeCloseTo(1);
+
+    const negative = new Value(-2);
+    negative.relu().backward();
+    expect(negative.grad).toBeCloseTo(0);
+  });
+
+  it('accumulates gradient when a value is reused multiple times', () => {
+    const x = new Value(2);
+    const out = x.add(x); // 2x
+    out.backward();
+
+    // d(2x)/dx = 2 — accumulation across both edges into x, not overwritten
+    expect(x.grad).toBeCloseTo(2);
+  });
+
+  it('propagates gradient through a small chain (children resolved before parents)', () => {
+    const a = new Value(2);
+    const b = new Value(3);
+    const c = a.mul(b); // 6
+    const d = c.add(a); // 8
+    const e = d.tanh();
+    e.backward();
+
+    const dTanh = 1 - Math.tanh(d.data) ** 2;
+    // d(e)/dc = dTanh, d(e)/da = dTanh * (b + 1), d(e)/db = dTanh * a
+    expect(c.grad).toBeCloseTo(dTanh);
+    expect(a.grad).toBeCloseTo(dTanh * (3 + 1));
+    expect(b.grad).toBeCloseTo(dTanh * 2);
+  });
+
+  it('zeroGrad resets this node and all of its ancestors', () => {
+    const x = new Value(1);
+    const out = x.mul(2);
+    out.backward();
+    expect(x.grad).not.toBe(0);
+
+    out.zeroGrad();
+    expect(x.grad).toBe(0);
+    expect(out.grad).toBe(0);
+  });
+});
