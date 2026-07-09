@@ -54,9 +54,31 @@ body {
 .topbar {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid rgba(79, 209, 255, 0.15);
+}
+
+.topbar__link {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid rgba(79, 209, 255, 0.25);
+  border-radius: var(--radius);
+  transition: color var(--transition-ui), border-color var(--transition-ui);
+}
+
+.topbar__link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.topbar__link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 209, 255, 0.4);
 }
 
 .wordmark {

@@ -31,7 +31,8 @@ if (!app) throw new Error('#app root element not found');
 
 app.innerHTML = `
   <header class="topbar">
-    <span class="wordmark"><span class="wordmark__glyph">&part;</span> Jacobian Playground</span>
+    <span class="wordmark"><span class="wordmark__glyph">&part;</span> Backflow</span>
+    <a class="topbar__link" href="https://github.com/ctkrug/jacobian-playground" target="_blank" rel="noopener">View on GitHub</a>
   </header>
   <div class="layout">
     <section class="stage"><canvas></canvas></section>
