@@ -279,3 +279,19 @@ input[type='range']:focus-visible {
   cursor: not-allowed;
   box-shadow: none;
 }
+
+.edge-tooltip {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(0, -100%);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid rgba(79, 209, 255, 0.4);
+  border-radius: var(--radius);
+  box-shadow: var(--glow-accent);
+  z-index: 10;
+}
