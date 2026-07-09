@@ -135,3 +135,43 @@ export function createActionButtons(specs: ActionButtonSpec[]): ActionButtons {
     },
   };
 }
+
+const SPEAKER_ICON =
+  '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16 8a5 5 0 0 1 0 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const MUTED_ICON =
+  '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16 9l5 5M21 9l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+export interface MuteToggle {
+  element: HTMLButtonElement;
+  onToggle(handler: () => void): void;
+  setMuted(muted: boolean): void;
+}
+
+/** Builds an icon-only mute toggle whose label and glyph reflect the current muted state. */
+export function createMuteToggle(initialMuted: boolean): MuteToggle {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'mute-toggle';
+
+  function render(muted: boolean): void {
+    button.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
+    button.setAttribute('aria-pressed', String(muted));
+    button.innerHTML = muted ? MUTED_ICON : SPEAKER_ICON;
+  }
+  render(initialMuted);
+
+  const listeners: Array<() => void> = [];
+  button.addEventListener('click', () => {
+    listeners.forEach((fn) => fn());
+  });
+
+  return {
+    element: button,
+    onToggle(handler) {
+      listeners.push(handler);
+    },
+    setMuted(muted) {
+      render(muted);
+    },
+  };
+}
