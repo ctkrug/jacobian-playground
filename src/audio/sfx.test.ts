@@ -169,4 +169,29 @@ describe('SfxEngine', () => {
       if (original) Object.defineProperty(window, 'localStorage', original);
     }
   });
+
+  it('still persists mute state through an in-memory fallback when localStorage is blocked', () => {
+    const original = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('blocked', 'SecurityError');
+      },
+    });
+
+    try {
+      const engine = new SfxEngine();
+      expect(engine.muted).toBe(false);
+
+      const nowMuted = engine.toggleMute();
+      expect(nowMuted).toBe(true);
+
+      // A second engine instance reads the same fallback store, so the
+      // muted flag survives even though real localStorage is unreachable.
+      const engineTwo = new SfxEngine();
+      expect(engineTwo.muted).toBe(true);
+    } finally {
+      if (original) Object.defineProperty(window, 'localStorage', original);
+    }
+  });
 });
