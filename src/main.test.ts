@@ -309,4 +309,20 @@ describe('action buttons and mute toggle', () => {
     muteButton.click();
     expect(muteButton.getAttribute('aria-pressed')).toBe('false');
   });
+
+  it('changing the backprop target selector recomputes from the new output', async () => {
+    vi.useFakeTimers();
+    await import('./main');
+
+    const select = document.querySelector<HTMLSelectElement>('.output-selector__select');
+    if (!select) throw new Error('expected a backprop target selector');
+    expect(select.value).toBe('0');
+
+    drawHeatmapMock.mockClear();
+    select.value = '1';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    vi.runAllTimers();
+
+    expect(drawHeatmapMock).toHaveBeenCalled();
+  });
 });
