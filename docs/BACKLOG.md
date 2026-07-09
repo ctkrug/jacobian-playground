@@ -62,7 +62,7 @@ it; taken together, this epic alone delivers the full wow moment.
   - Changing topology reinitializes weights and redraws the heatmap with no
     console errors.
 
-- [ ] **2.4 — Randomize / reset weights control**
+- [x] **2.4 — Randomize / reset weights control**
   - A "randomize" button reinitializes all weights with a new random seed
     and immediately repaints the heatmap.
   - A separate "reset" control restores the original default network
