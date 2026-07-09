@@ -49,7 +49,7 @@ it; taken together, this epic alone delivers the full wow moment.
     from that output and repaints the heatmap accordingly.
   - The currently selected target is visually indicated in the control.
 
-- [ ] **2.2 — Hover tooltip for a single connection's Jacobian entry**
+- [x] **2.2 — Hover tooltip for a single connection's Jacobian entry**
   - Hovering an edge shows its weight, its upstream neuron's gradient, and
     their product (the local Jacobian entry) in a themed tooltip.
   - The tooltip disappears on `mouseleave` and never traps focus for
