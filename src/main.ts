@@ -2,10 +2,10 @@ import './style.css';
 import { MLP } from './nn/network';
 import { drawHeatmap, type HeatmapLayer } from './viz/heatmap';
 import { buildHybridLayers, scheduleRipple, type RippleHandle } from './viz/ripple';
-import { createSliderPanel } from './viz/controls';
+import { createOutputSelector, createSliderPanel } from './viz/controls';
 
 const NUM_INPUTS = 3;
-const LAYER_SIZES = [5, 4, 1];
+const LAYER_SIZES = [5, 4, 3];
 
 function seededRand(seed: number): () => number {
   let state = seed;
@@ -38,6 +38,7 @@ const canvas: HTMLCanvasElement = canvasEl;
 
 let prevLayers: HeatmapLayer[] = [];
 let pendingRipple: RippleHandle | null = null;
+let backpropTarget = 0;
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -51,10 +52,10 @@ function recomputeAndDraw(): void {
   });
 
   const trace = network.forward(inputValues);
-  // Backprop from the (sole) output neuron so every upstream neuron's
-  // .grad becomes d(output)/d(that neuron) — the Jacobian row this
+  // Backprop from the chosen output neuron so every upstream neuron's
+  // .grad becomes d(that output)/d(that neuron) — the Jacobian row this
   // network visualizes.
-  trace.outputs[0].backward();
+  trace.outputs[backpropTarget].backward();
 
   const nextLayers: HeatmapLayer[] = trace.layerActivations.map((neurons) => ({ neurons }));
 
@@ -86,6 +87,18 @@ sliderPanel.onChange((index, value) => {
   recomputeAndDraw();
 });
 controlsEl.appendChild(sliderPanel.element);
+
+const outputSelector = createOutputSelector(
+  LAYER_SIZES[LAYER_SIZES.length - 1] > 1
+    ? Array.from({ length: LAYER_SIZES[LAYER_SIZES.length - 1] }, (_, i) => `y${i}`)
+    : ['y0'],
+  backpropTarget,
+);
+outputSelector.onChange((index) => {
+  backpropTarget = index;
+  recomputeAndDraw();
+});
+controlsEl.appendChild(outputSelector.element);
 
 window.addEventListener('resize', recomputeAndDraw);
 
