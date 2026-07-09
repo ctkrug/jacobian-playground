@@ -89,4 +89,25 @@ describe('recomputeAndDraw ripple wiring', () => {
     // not jump straight to the final new state just because the mouse moved.
     expect(hoverFrameLayers[2]).toBe(midRippleLayers[2]);
   });
+
+  it('does not accumulate pending ripple timers across many rapid drags', async () => {
+    vi.useFakeTimers();
+
+    await import('./main');
+
+    const slider = document.querySelector<HTMLInputElement>('input[aria-label="x0"]');
+    if (!slider) throw new Error('expected an x0 slider in the mounted controls panel');
+
+    for (let i = 0; i < 50; i += 1) {
+      slider.value = String((i % 20) / 10 - 1);
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // Each recompute cancels its predecessor's pending ripple frames before
+    // scheduling its own, so the timer queue should never outgrow one ripple.
+    expect(vi.getTimerCount()).toBeLessThanOrEqual(3);
+
+    vi.runAllTimers();
+    expect(vi.getTimerCount()).toBe(0);
+  });
 });
