@@ -5,7 +5,9 @@ import { computeLayout, drawHeatmap, type HeatmapLayer, type NodePosition } from
 import { buildHybridLayers, scheduleRipple, type RippleHandle } from './viz/ripple';
 import { findNearestEdge, type EdgeInfo } from './viz/edges';
 import { createEdgeTooltip } from './viz/tooltip';
-import { createActionButtons, createOutputSelector, createSliderPanel } from './viz/controls';
+import { hasGradientSignFlip } from './viz/threshold';
+import { createActionButtons, createMuteToggle, createOutputSelector, createSliderPanel } from './viz/controls';
+import { SfxEngine } from './audio/sfx';
 
 const NUM_INPUTS = 3;
 const LAYER_SIZES = [5, 4, 3];
@@ -21,6 +23,7 @@ function seededRand(seed: number): () => number {
 
 const network = new MLP(NUM_INPUTS, LAYER_SIZES, seededRand(INITIAL_SEED));
 let inputValues = [0.5, -0.2, 0.1];
+const sfx = new SfxEngine();
 
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) throw new Error('#app root element not found');
@@ -87,6 +90,10 @@ function recomputeAndDraw(): void {
 
   const nextLayers: HeatmapLayer[] = trace.layerActivations.map((neurons) => ({ neurons }));
 
+  if (hasGradientSignFlip(prevLayers, nextLayers)) {
+    sfx.play('pop');
+  }
+
   const rect = canvas.getBoundingClientRect();
   currentEdges = buildEdges(
     computeLayout(rect.width, rect.height, nextLayers.map((l) => l.neurons.length)),
@@ -118,6 +125,7 @@ const sliderPanel = createSliderPanel(
 );
 sliderPanel.onChange((index, value) => {
   inputValues = inputValues.map((v, i) => (i === index ? value : v));
+  sfx.play('tick');
   recomputeAndDraw();
 });
 controlsEl.appendChild(sliderPanel.element);
@@ -144,9 +152,19 @@ actionButtons.onClick((id) => {
   } else if (id === 'reset') {
     network.randomize(seededRand(INITIAL_SEED));
   }
+  sfx.play('chime');
   recomputeAndDraw();
 });
 controlsEl.appendChild(actionButtons.element);
+
+const controlsHeader = document.createElement('div');
+controlsHeader.className = 'controls-header';
+const muteToggle = createMuteToggle(sfx.muted);
+muteToggle.onToggle(() => {
+  muteToggle.setMuted(sfx.toggleMute());
+});
+controlsHeader.appendChild(muteToggle.element);
+controlsEl.insertBefore(controlsHeader, controlsEl.firstChild);
 
 const edgeTooltip = createEdgeTooltip();
 stageEl.appendChild(edgeTooltip.element);
