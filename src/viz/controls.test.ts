@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSliderPanel } from './controls';
+import { createOutputSelector, createSliderPanel } from './controls';
 
 describe('createSliderPanel', () => {
   it('renders one range input per spec, initialized to its value', () => {
@@ -35,5 +35,34 @@ describe('createSliderPanel', () => {
     input.dispatchEvent(new Event('input'));
 
     expect(readout.textContent).toBe('0.33');
+  });
+});
+
+describe('createOutputSelector', () => {
+  it('renders one option per label, with the initial selection marked', () => {
+    const selector = createOutputSelector(['y0', 'y1', 'y2'], 1);
+
+    const select = selector.element.querySelector('select') as HTMLSelectElement;
+    const options = select.querySelectorAll('option');
+    expect(options).toHaveLength(3);
+    expect(select.value).toBe('1');
+  });
+
+  it('notifies onChange handlers with the selected index', () => {
+    const selector = createOutputSelector(['y0', 'y1'], 0);
+    const handler = vi.fn();
+    selector.onChange(handler);
+
+    const select = selector.element.querySelector('select') as HTMLSelectElement;
+    select.value = '1';
+    select.dispatchEvent(new Event('change'));
+
+    expect(handler).toHaveBeenCalledWith(1);
+  });
+
+  it('handles a single output with no options lost', () => {
+    const selector = createOutputSelector(['y0'], 0);
+    const options = selector.element.querySelectorAll('option');
+    expect(options).toHaveLength(1);
   });
 });
