@@ -70,14 +70,14 @@ it; taken together, this epic alone delivers the full wow moment.
 
 ## Epic 3 — Design & polish
 
-- [ ] **3.1 — Apply `docs/DESIGN.md` tokens and blueprint-technical direction**
+- [x] **3.1 — Apply `docs/DESIGN.md` tokens and blueprint-technical direction**
   - The page uses the chosen font pairing (Space Grotesk / JetBrains Mono),
     color tokens, and 8px spacing scale throughout — no default browser
     styling left on headings, buttons, or the page background.
   - No native unstyled control remains: every slider, button, and select has
     themed hover/focus-visible/active states.
 
-- [ ] **3.2 — Responsive layout for desktop and phone**
+- [x] **3.2 — Responsive layout for desktop and phone**
   - Layout composes with no horizontal scroll and no overlapping elements at
     390px, 768px, and 1440px viewport widths.
   - The heatmap canvas fills at least 60% of the viewport height on desktop
