@@ -280,6 +280,45 @@ input[type='range']:focus-visible {
   box-shadow: none;
 }
 
+.controls-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+}
+
+.mute-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid rgba(79, 209, 255, 0.25);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color var(--transition-ui), border-color var(--transition-ui), box-shadow var(--transition-ui);
+}
+
+.mute-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.mute-toggle:focus-visible {
+  box-shadow: 0 0 0 3px rgba(79, 209, 255, 0.4);
+}
+
+.mute-toggle:active {
+  transform: scale(0.94);
+}
+
+.mute-toggle[aria-pressed='true'] {
+  color: var(--text-muted);
+  border-color: rgba(143, 163, 196, 0.3);
+}
+
 .edge-tooltip {
   position: absolute;
   pointer-events: none;
