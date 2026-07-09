@@ -58,6 +58,24 @@ describe('isMuted / setMuted', () => {
     setMuted(false, storage);
     expect(isMuted(storage)).toBe(false);
   });
+
+  it('treats a storage that throws on read as unmuted rather than crashing', () => {
+    const throwing: Pick<Storage, 'getItem'> = {
+      getItem: () => {
+        throw new DOMException('blocked', 'SecurityError');
+      },
+    };
+    expect(isMuted(throwing)).toBe(false);
+  });
+
+  it('swallows a storage that throws on write instead of propagating', () => {
+    const throwing: Pick<Storage, 'setItem'> = {
+      setItem: () => {
+        throw new DOMException('blocked', 'SecurityError');
+      },
+    };
+    expect(() => setMuted(true, throwing)).not.toThrow();
+  });
 });
 
 describe('shouldPlay', () => {
@@ -134,5 +152,21 @@ describe('SfxEngine', () => {
     expect(nowMuted).toBe(true);
     expect(engine.muted).toBe(true);
     expect(isMuted(storage)).toBe(true);
+  });
+
+  it('does not throw when window.localStorage itself is inaccessible (e.g. blocked storage)', () => {
+    const original = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('blocked', 'SecurityError');
+      },
+    });
+
+    try {
+      expect(() => new SfxEngine()).not.toThrow();
+    } finally {
+      if (original) Object.defineProperty(window, 'localStorage', original);
+    }
   });
 });
