@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Backflow — Drag a slider, watch the gradient flow</title>
+    <title>Backflow: drag a slider, watch the gradient flow</title>
     <meta
       name="description"
       content="Backflow is a neural network you can poke. Drag an input and watch the gradient light up every neuron, computed live by an autodiff engine built from scratch."
     />
-    <meta property="og:title" content="Backflow — Drag a slider, watch the gradient flow" />
+    <meta property="og:title" content="Backflow: drag a slider, watch the gradient flow" />
     <meta
       property="og:description"
       content="A neural network you can poke: drag an input and watch backpropagation light up every neuron, live, computed by a hand-built autodiff engine."
@@ -21,6 +21,88 @@
   </head>
   <body>
     <div id="app"></div>
+
+    <section class="learn" aria-labelledby="learn-heading">
+      <div class="learn__inner">
+        <h1 id="learn-heading" class="learn__title">See what <code>.backward()</code> actually does</h1>
+        <p class="learn__lede">
+          Backflow is a small neural network you can poke. Drag an input slider and it runs a full
+          forward and backward pass, then colors every neuron by how strongly it responds to that
+          input. The gradients you usually only read about become something you watch move.
+        </p>
+
+        <h2 class="learn__h2">What it does</h2>
+        <ul class="learn__list">
+          <li>
+            <strong>Gradients as color, not equations.</strong> Every neuron is tinted by
+            <code>d(output) / d(neuron)</code>, the exact value backpropagation computes, on a
+            cold-to-hot diverging scale so you can see which neurons carry the signal.
+          </li>
+          <li>
+            <strong>Drag and it ripples.</strong> Moving a slider recomputes the whole network and
+            reveals the new gradients layer by layer, left to right, in under 300ms, so the flow
+            reads as a wave rather than a flat repaint.
+          </li>
+          <li>
+            <strong>Inspect any connection.</strong> Hover an edge for its weight, its upstream
+            gradient, and their product: one entry of the Jacobian, written out. Hover a neuron for
+            its exact gradient.
+          </li>
+          <li>
+            <strong>Switch the output you differentiate.</strong> Pick which output neuron to
+            backpropagate from and a different row of the Jacobian appears.
+          </li>
+          <li>
+            <strong>No framework, no black box.</strong> The autodiff engine is a small scalar
+            <code>Value</code> graph written from scratch and unit-tested against analytic
+            derivatives. No TensorFlow.js, no PyTorch.
+          </li>
+        </ul>
+
+        <h2 class="learn__h2">How to use it</h2>
+        <ol class="learn__list">
+          <li>Drag any <code>x</code> slider and watch the heatmap recolor from left to right.</li>
+          <li>Change the backprop target to see the gradient of a different output.</li>
+          <li>Hover a neuron or a connection to read the exact number behind the color.</li>
+          <li>Use Randomize to draw new weights, or Reset to return to the starting network.</li>
+        </ol>
+
+        <h2 class="learn__h2">FAQ</h2>
+        <dl class="learn__faq">
+          <dt>What is a Jacobian?</dt>
+          <dd>
+            It is the table of partial derivatives of a network's outputs with respect to its
+            inputs: how much each output moves when you nudge each input. Backflow shows one row of
+            it at a time, live, as color across the neurons.
+          </dd>
+          <dt>Does this train the network?</dt>
+          <dd>
+            No. Backflow visualizes gradients rather than doing gradient descent. Weights only change
+            when you press Randomize or Reset, so you can study a fixed network as long as you like.
+          </dd>
+          <dt>Do I need to install anything?</dt>
+          <dd>No. It runs entirely in the browser with no account, no server, and no GPU.</dd>
+          <dt>Is the math real or an approximation?</dt>
+          <dd>
+            Real reverse-mode automatic differentiation. The same engine that draws the heatmap is
+            checked against hand-derived analytic derivatives in the test suite.
+          </dd>
+          <dt>Can I read the code?</dt>
+          <dd>
+            Yes. The autodiff engine and the network are original and small enough to read in one
+            sitting. The
+            <a href="https://github.com/ctkrug/jacobian-playground">source is on GitHub</a>.
+          </dd>
+        </dl>
+
+        <a class="learn__cta" href="https://github.com/ctkrug/jacobian-playground">View the code on GitHub</a>
+      </div>
+
+      <footer class="learn__footer">
+        <a href="https://apps.charliekrug.com">More by Charlie Krug &rarr; apps.charliekrug.com</a>
+      </footer>
+    </section>
+
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
