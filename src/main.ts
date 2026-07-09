@@ -2,10 +2,11 @@ import './style.css';
 import { MLP } from './nn/network';
 import { drawHeatmap, type HeatmapLayer } from './viz/heatmap';
 import { buildHybridLayers, scheduleRipple, type RippleHandle } from './viz/ripple';
-import { createOutputSelector, createSliderPanel } from './viz/controls';
+import { createActionButtons, createOutputSelector, createSliderPanel } from './viz/controls';
 
 const NUM_INPUTS = 3;
 const LAYER_SIZES = [5, 4, 3];
+const INITIAL_SEED = 42;
 
 function seededRand(seed: number): () => number {
   let state = seed;
@@ -15,7 +16,7 @@ function seededRand(seed: number): () => number {
   };
 }
 
-const network = new MLP(NUM_INPUTS, LAYER_SIZES, seededRand(42));
+const network = new MLP(NUM_INPUTS, LAYER_SIZES, seededRand(INITIAL_SEED));
 let inputValues = [0.5, -0.2, 0.1];
 
 const app = document.querySelector<HTMLDivElement>('#app');
@@ -99,6 +100,20 @@ outputSelector.onChange((index) => {
   recomputeAndDraw();
 });
 controlsEl.appendChild(outputSelector.element);
+
+const actionButtons = createActionButtons([
+  { id: 'randomize', label: 'Randomize' },
+  { id: 'reset', label: 'Reset' },
+]);
+actionButtons.onClick((id) => {
+  if (id === 'randomize') {
+    network.randomize(Math.random);
+  } else if (id === 'reset') {
+    network.randomize(seededRand(INITIAL_SEED));
+  }
+  recomputeAndDraw();
+});
+controlsEl.appendChild(actionButtons.element);
 
 window.addEventListener('resize', recomputeAndDraw);
 
