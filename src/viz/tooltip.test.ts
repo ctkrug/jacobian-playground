@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEdgeTooltip, formatEdgeText } from './tooltip';
+import { createEdgeTooltip, formatEdgeText, formatNodeText } from './tooltip';
 import type { EdgeInfo } from './edges';
 
 function edge(weight: number, upstreamGrad: number): EdgeInfo {
@@ -37,5 +37,22 @@ describe('createEdgeTooltip', () => {
     tooltip.hide();
 
     expect(tooltip.element.hidden).toBe(true);
+  });
+
+  it('showText() reveals arbitrary text (e.g. a hovered neuron gradient)', () => {
+    const tooltip = createEdgeTooltip();
+    tooltip.showText(formatNodeText(-0.42), 10, 20);
+
+    expect(tooltip.element.hidden).toBe(false);
+    expect(tooltip.element.textContent).toBe(formatNodeText(-0.42));
+    expect(tooltip.element.style.left).toBe('10px');
+    expect(tooltip.element.style.top).toBe('20px');
+  });
+});
+
+describe('formatNodeText', () => {
+  it('renders the gradient to three decimal places', () => {
+    expect(formatNodeText(0.4)).toBe('∂ 0.400');
+    expect(formatNodeText(-1.5)).toBe('∂ -1.500');
   });
 });
