@@ -6,7 +6,7 @@ The first story here IS the demo: drag a slider, watch the heatmap flow.
 Everything else in this epic is the technical decomposition needed to reach
 it; taken together, this epic alone delivers the full wow moment.
 
-- [ ] **1.1 — [WOW MOMENT] Drag an input slider and watch the gradient heatmap ripple live**
+- [x] **1.1 — [WOW MOMENT] Drag an input slider and watch the gradient heatmap ripple live**
   - Dragging any input slider recomputes a full forward+backward pass and
     recolors every neuron node across every layer within a single animation
     frame — no stale frame while dragging continuously.
@@ -16,26 +16,26 @@ it; taken together, this epic alone delivers the full wow moment.
   - Unit tests confirm the autodiff engine's computed gradients match
     hand-checked analytic derivatives for a small example network.
 
-- [ ] **1.2 — Reverse-mode autodiff `Value` engine**
+- [x] **1.2 — Reverse-mode autodiff `Value` engine**
   - Gradient checks pass against analytic derivatives for `+`, `*`, `pow`,
     `tanh`, and `relu`, including a chain of several ops.
   - `backward()` visits every node's children before the node itself
     (verified by a test asserting correct accumulated `.grad` on a small
     hand-built graph with a reused/shared node).
 
-- [ ] **1.3 — Configurable MLP built on the `Value` engine**
+- [x] **1.3 — Configurable MLP built on the `Value` engine**
   - `forward()` returns per-layer post-activation `Value`s for arbitrary
     layer sizes, and throws a clear error on an input-count mismatch.
   - Calling `.backward()` on one chosen output sets a nonzero `.grad` on
     every upstream neuron and every input `Value`.
 
-- [ ] **1.4 — DevicePixelRatio-aware canvas heatmap renderer**
+- [x] **1.4 — DevicePixelRatio-aware canvas heatmap renderer**
   - Neurons render as nodes colored on a diverging scale by signed
     `.grad` magnitude (cold → neutral → hot, per `docs/DESIGN.md`).
   - The canvas backing store matches `devicePixelRatio` and stays crisp
     (no blur) when resized between 390px and 1440px widths.
 
-- [ ] **1.5 — Slider panel wired to trigger recompute**
+- [x] **1.5 — Slider panel wired to trigger recompute**
   - Each input has a labeled range slider with a live mono numeric readout
     that updates as it's dragged.
   - Moving any slider triggers exactly one forward+backward pass and a full
@@ -95,7 +95,7 @@ it; taken together, this epic alone delivers the full wow moment.
 
 ## Epic 4 — Deployment & docs
 
-- [ ] **4.1 — Static build pipeline outputs a single deployable directory**
+- [x] **4.1 — Static build pipeline outputs a single deployable directory**
   - `npm run build` outputs to `dist/` containing only relative asset paths
     (verified by inspecting `dist/index.html` for the absence of any
     leading-`/` asset reference).
@@ -103,7 +103,7 @@ it; taken together, this epic alone delivers the full wow moment.
     non-root sub-path (e.g. `python3 -m http.server` from inside a
     subdirectory of `dist/`).
 
-- [ ] **4.2 — CI runs tests, typecheck, lint, and build on push**
+- [x] **4.2 — CI runs tests, typecheck, lint, and build on push**
   - The GitHub Actions workflow installs dependencies and runs
     `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`,
     failing on any red step.
