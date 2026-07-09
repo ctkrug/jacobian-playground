@@ -46,6 +46,8 @@ if (!canvasEl || !stageEl || !controlsEl) throw new Error('expected stage canvas
 const canvas: HTMLCanvasElement = canvasEl;
 
 let prevLayers: HeatmapLayer[] = [];
+/** Whatever the canvas actually last showed — may lag prevLayers mid-ripple. */
+let lastRenderedLayers: HeatmapLayer[] = [];
 let pendingRipple: RippleHandle | null = null;
 let backpropTarget = 0;
 let currentEdges: EdgeInfo[] = [];
@@ -117,7 +119,8 @@ function recomputeAndDraw(): void {
   pendingRipple = scheduleRipple(
     nextLayers.length,
     (revealedThrough) => {
-      drawHeatmap(canvas, buildHybridLayers(outgoingLayers, nextLayers, revealedThrough));
+      lastRenderedLayers = buildHybridLayers(outgoingLayers, nextLayers, revealedThrough);
+      drawHeatmap(canvas, lastRenderedLayers);
     },
     { reducedMotion: prefersReducedMotion() },
   );
@@ -188,13 +191,13 @@ canvas.addEventListener('mousemove', (event) => {
   if (nodeHit) {
     hoveredNode = nodeHit;
     edgeTooltip.showText(formatNodeText(prevLayers[nodeHit.layerIndex].neurons[nodeHit.neuronIndex].grad), x + 12, y + 12);
-    drawHeatmap(canvas, prevLayers, { hoveredNode });
+    drawHeatmap(canvas, lastRenderedLayers, { hoveredNode });
     return;
   }
 
   if (hoveredNode) {
     hoveredNode = null;
-    drawHeatmap(canvas, prevLayers, { hoveredNode });
+    drawHeatmap(canvas, lastRenderedLayers, { hoveredNode });
   }
 
   const edgeHit = findNearestEdge(currentEdges, x, y);
@@ -208,7 +211,7 @@ canvas.addEventListener('mouseleave', () => {
   edgeTooltip.hide();
   if (hoveredNode) {
     hoveredNode = null;
-    drawHeatmap(canvas, prevLayers, { hoveredNode });
+    drawHeatmap(canvas, lastRenderedLayers, { hoveredNode });
   }
 });
 
