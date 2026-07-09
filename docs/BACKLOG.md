@@ -108,7 +108,7 @@ it; taken together, this epic alone delivers the full wow moment.
     `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`,
     failing on any red step.
 
-- [ ] **4.3 — README documents usage and architecture**
+- [x] **4.3 — README documents usage and architecture**
   - README explains how to run the project locally (`dev`, `test`, `build`)
     and includes a short architecture section describing the autodiff
     engine + heatmap approach in plain language.
