@@ -47,4 +47,35 @@ describe('MLP', () => {
     // for two independent input gradients to match exactly.
     expect(grads[0]).not.toBeCloseTo(grads[1], 10);
   });
+
+  it('randomize() draws new weights that differ from the originals', () => {
+    const net = new MLP(3, [4, 2], seededRand(1));
+    const before = net.parameters().map((p) => p.data);
+
+    net.randomize(seededRand(999));
+    const after = net.parameters().map((p) => p.data);
+
+    expect(after).not.toEqual(before);
+  });
+
+  it('randomize() with the construction seed reproduces the original weights (reset)', () => {
+    const netA = new MLP(3, [4, 2], seededRand(7));
+    const original = netA.parameters().map((p) => p.data);
+
+    netA.randomize(seededRand(123)); // scramble first
+    netA.randomize(seededRand(7)); // "reset" by replaying the original seed
+    const restored = netA.parameters().map((p) => p.data);
+
+    expect(restored).toEqual(original);
+  });
+
+  it('randomize() zeroes every parameter gradient', () => {
+    const net = new MLP(2, [3, 1], seededRand(2));
+    const trace = net.forward([0.3, -0.4]);
+    trace.outputs[0].backward();
+    expect(net.parameters().some((p) => p.grad !== 0)).toBe(true);
+
+    net.randomize(seededRand(5));
+    expect(net.parameters().every((p) => p.grad === 0)).toBe(true);
+  });
 });
