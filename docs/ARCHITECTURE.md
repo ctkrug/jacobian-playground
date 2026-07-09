@@ -27,6 +27,15 @@ Nothing is mutated in place across passes except the network's learned
 parameters (weights/biases); inputs and activations are new `Value` nodes each
 `forward()` call, so there is no stale gradient state to reason about.
 
+`recomputeAndDraw()` snapshots the outgoing `prevLayers` into a local
+`outgoingLayers` const *before* reassigning `prevLayers = nextLayers` — the
+ripple's `setTimeout` callbacks run after that reassignment, so without the
+snapshot every frame would diff `nextLayers` against itself and the reveal
+would jump straight to the final state. A second variable, `lastRenderedLayers`,
+tracks whatever the canvas actually last painted (which lags `prevLayers`
+mid-ripple); every hover/keyboard-driven redraw uses it instead of `prevLayers`
+so inspecting a neuron never fast-forwards an in-flight ripple.
+
 ## Modules
 
 - **`src/autodiff/value.ts`** — the entire autodiff engine. `Value` wraps a
@@ -58,7 +67,8 @@ parameters (weights/biases); inputs and activations are new `Value` nodes each
   (there can be dozens of edges; canvas has no hoverable nodes).
 - **`src/viz/tooltip.ts`** — the hover tooltip's DOM element and
   show/hide/format logic, decoupled from hit-testing so each is testable on
-  its own.
+  its own. Reused for both mouse hover and the keyboard-driven cursor in
+  `main.ts` (`role="status"` makes either path announce to a live region).
 - **`src/viz/controls.ts`** — every themed control: the input slider panel,
   the output (backprop target) selector, and the generic action-button row
   (randomize/reset). Each returns `{ element, onChange/onClick }` rather than
@@ -68,7 +78,11 @@ parameters (weights/biases); inputs and activations are new `Value` nodes each
   current input values, and the current backprop target; wires every control
   to `recomputeAndDraw()`; owns `buildEdges()`, the one place that couples
   the network's internal `Layer`/`Neuron` weights to on-screen positions
-  (kept out of `viz/` so that module stays network-agnostic).
+  (kept out of `viz/` so that module stays network-agnostic). The canvas is
+  focusable (`tabIndex = 0`) with a `keydown` handler that steps a
+  `keyboardNode` cursor between neurons via arrow keys, driving the exact
+  same tooltip/highlight the mouse-hover path uses — the only way keyboard
+  users can reach a neuron's precise gradient or an edge's Jacobian entry.
 
 ## Running it
 
@@ -76,6 +90,7 @@ parameters (weights/biases); inputs and activations are new `Value` nodes each
 npm install
 npm run dev        # local dev server
 npm test           # vitest, all modules above are unit-tested
+npm run test:coverage  # vitest with v8 line/branch coverage
 npm run typecheck   # tsc --noEmit
 npm run lint        # eslint src
 npm run build       # static production build -> dist/, relative asset paths
