@@ -22,17 +22,24 @@ that input, live, as color.
 - A canvas-rendered heatmap: every neuron in every layer is colored by
   `d(chosen output) / d(that neuron's activation)` — the live gradient signal,
   not a static diagram.
-- Input sliders that trigger a fresh forward + backward pass on every drag, so
-  the heatmap updates continuously as you move.
+- Input sliders that trigger a fresh forward + backward pass on every drag,
+  with the heatmap revealing layer-by-layer on a short stagger so the
+  gradient reads as a ripple flowing left to right (instant under
+  `prefers-reduced-motion`).
+- A selector to choose which output neuron to backpropagate from, so you can
+  see a different row of the Jacobian on demand.
+- Hover a connection for its exact Jacobian entry (weight × upstream
+  gradient); hover a neuron for its exact gradient value.
+- Randomize/reset controls to reinitialize weights or restore the network's
+  original starting weights.
+- Synthesized WebAudio feedback (tick/pop/chime — no audio files) with a
+  persisted mute toggle.
 
 ## Planned features
 
 See [`docs/BACKLOG.md`](docs/BACKLOG.md) for the full epic/story breakdown and
 [`docs/VISION.md`](docs/VISION.md) for the design rationale. Highlights:
 
-- Selectable target output to backprop from.
-- Hover tooltip exposing the exact Jacobian entry (weight × upstream gradient)
-  for a single connection.
 - Adjustable network topology (hidden layer count/width) with reinitialization.
 - A deliberate visual direction (see [`docs/DESIGN.md`](docs/DESIGN.md)) —
   this is a designed interactive toy, not a wireframe.
@@ -58,11 +65,19 @@ See [`docs/BACKLOG.md`](docs/BACKLOG.md) for the full epic/story breakdown and
 - `src/viz/heatmap.ts` — a `devicePixelRatio`-aware canvas renderer that
   colors each neuron on a diverging cold/neutral/hot scale keyed off its
   `.grad`.
-- `src/viz/controls.ts` — the themed slider panel; each drag triggers a
-  fresh forward+backward pass and a full repaint.
+- `src/viz/ripple.ts` — schedules the layer-by-layer staggered reveal behind
+  every recompute (instant under reduced motion).
+- `src/viz/edges.ts` / `src/viz/nodeHit.ts` / `src/viz/tooltip.ts` — hit-test
+  the cursor against connections/neurons and show the exact Jacobian entry
+  or gradient in a themed tooltip.
+- `src/audio/sfx.ts` — synthesized WebAudio SFX (tick/pop/chime) with a
+  persisted mute toggle.
+- `src/viz/controls.ts` — every themed control: sliders, the output
+  selector, randomize/reset buttons, and the mute toggle.
 - `src/main.ts` — wires the above together into the running app.
 
-See [`docs/VISION.md`](docs/VISION.md) for the full rationale.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full data-flow map
+and [`docs/VISION.md`](docs/VISION.md) for the rationale.
 
 ## Getting started
 
