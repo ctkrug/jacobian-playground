@@ -246,3 +246,67 @@ describe('mouse hover interactions', () => {
     expect(tooltip?.hidden).toBe(true);
   });
 });
+
+function gradsOf(layers: Array<{ neurons: Array<{ grad: number }> }>): number[] {
+  return layers.flatMap((l) => l.neurons.map((n) => n.grad));
+}
+
+function findButtonByText(text: string): HTMLButtonElement {
+  const button = Array.from(document.querySelectorAll('button')).find((b) => b.textContent === text);
+  if (!button) throw new Error(`expected a button labeled "${text}"`);
+  return button;
+}
+
+describe('action buttons and mute toggle', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    drawHeatmapMock.mockClear();
+    document.body.innerHTML = '<div id="app"></div>';
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('clicking Randomize reinitializes weights and triggers a recompute', async () => {
+    vi.useFakeTimers();
+    await import('./main');
+    drawHeatmapMock.mockClear();
+
+    findButtonByText('Randomize').click();
+    vi.runAllTimers();
+
+    expect(drawHeatmapMock).toHaveBeenCalled();
+  });
+
+  it('clicking Reset restores different gradients than a prior Randomize', async () => {
+    vi.useFakeTimers();
+    await import('./main');
+
+    drawHeatmapMock.mockClear();
+    findButtonByText('Randomize').click();
+    vi.runAllTimers();
+    const afterRandomize = gradsOf(drawHeatmapMock.mock.calls[drawHeatmapMock.mock.calls.length - 1][1]);
+
+    findButtonByText('Reset').click();
+    vi.runAllTimers();
+    const afterReset = gradsOf(drawHeatmapMock.mock.calls[drawHeatmapMock.mock.calls.length - 1][1]);
+
+    // Randomize draws fresh Math.random() weights every time, so a coincidental
+    // match with the fixed reset seed is vanishingly unlikely across ~40 params.
+    expect(afterReset).not.toEqual(afterRandomize);
+  });
+
+  it('clicking the mute toggle flips its aria-pressed state', async () => {
+    await import('./main');
+    const muteButton = document.querySelector<HTMLButtonElement>('.mute-toggle');
+    if (!muteButton) throw new Error('expected a mute toggle button');
+    expect(muteButton.getAttribute('aria-pressed')).toBe('false');
+
+    muteButton.click();
+    expect(muteButton.getAttribute('aria-pressed')).toBe('true');
+
+    muteButton.click();
+    expect(muteButton.getAttribute('aria-pressed')).toBe('false');
+  });
+});
