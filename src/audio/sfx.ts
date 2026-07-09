@@ -1,11 +1,39 @@
 const MUTE_STORAGE_KEY = 'jacobian-playground:muted';
 
-export function isMuted(storage: Pick<Storage, 'getItem'> = window.localStorage): boolean {
-  return storage.getItem(MUTE_STORAGE_KEY) === 'true';
+const memoryFallback = new Map<string, string>();
+
+/**
+ * Resolves the real localStorage, falling back to an in-memory Map when the property
+ * itself is inaccessible (e.g. a sandboxed iframe or a browser blocking storage) rather
+ * than letting that SecurityError take down the whole module at construction time.
+ */
+function defaultStorage(): Pick<Storage, 'getItem' | 'setItem'> {
+  try {
+    return window.localStorage;
+  } catch {
+    return {
+      getItem: (key) => memoryFallback.get(key) ?? null,
+      setItem: (key, value) => {
+        memoryFallback.set(key, value);
+      },
+    };
+  }
 }
 
-export function setMuted(muted: boolean, storage: Pick<Storage, 'setItem'> = window.localStorage): void {
-  storage.setItem(MUTE_STORAGE_KEY, String(muted));
+export function isMuted(storage: Pick<Storage, 'getItem'> = defaultStorage()): boolean {
+  try {
+    return storage.getItem(MUTE_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function setMuted(muted: boolean, storage: Pick<Storage, 'setItem'> = defaultStorage()): void {
+  try {
+    storage.setItem(MUTE_STORAGE_KEY, String(muted));
+  } catch {
+    // best-effort persistence only; a blocked/full store shouldn't break muting
+  }
 }
 
 /** True once at least `minIntervalMs` has passed since the last play, so rapid dragging can't machine-gun a sound. */
@@ -77,7 +105,7 @@ export class SfxEngine {
   constructor(options: SfxEngineOptions = {}) {
     this.now = options.now ?? (() => Date.now());
     this.createContext = options.createContext ?? defaultCreateContext;
-    this.storage = options.storage ?? window.localStorage;
+    this.storage = options.storage ?? defaultStorage();
     this.muted = isMuted(this.storage);
   }
 
