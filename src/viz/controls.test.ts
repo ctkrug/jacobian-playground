@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createActionButtons, createOutputSelector, createSliderPanel } from './controls';
+import { createActionButtons, createMuteToggle, createOutputSelector, createSliderPanel } from './controls';
 
 describe('createSliderPanel', () => {
   it('renders one range input per spec, initialized to its value', () => {
@@ -98,5 +98,37 @@ describe('createActionButtons', () => {
   it('renders no buttons for an empty spec list without throwing', () => {
     const buttons = createActionButtons([]);
     expect(buttons.element.querySelectorAll('button')).toHaveLength(0);
+  });
+});
+
+describe('createMuteToggle', () => {
+  it('labels itself for the initial unmuted state', () => {
+    const toggle = createMuteToggle(false);
+    expect(toggle.element.getAttribute('aria-label')).toBe('Mute sound');
+    expect(toggle.element.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('labels itself for the initial muted state', () => {
+    const toggle = createMuteToggle(true);
+    expect(toggle.element.getAttribute('aria-label')).toBe('Unmute sound');
+    expect(toggle.element.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('notifies onToggle handlers on click', () => {
+    const toggle = createMuteToggle(false);
+    const handler = vi.fn();
+    toggle.onToggle(handler);
+
+    toggle.element.dispatchEvent(new MouseEvent('click'));
+
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it('setMuted updates the label without waiting for a click', () => {
+    const toggle = createMuteToggle(false);
+    toggle.setMuted(true);
+
+    expect(toggle.element.getAttribute('aria-label')).toBe('Unmute sound');
+    expect(toggle.element.getAttribute('aria-pressed')).toBe('true');
   });
 });
