@@ -19,6 +19,14 @@ describe('MLP', () => {
     expect(trace.layerActivations[0]).toHaveLength(4);
   });
 
+  it('uses tanh for hidden layers and linear for the final output layer', () => {
+    const net = new MLP(3, [4, 2, 5], seededRand(1));
+
+    expect(net.layers[0].neurons.every((n) => n.activation === 'tanh')).toBe(true);
+    expect(net.layers[1].neurons.every((n) => n.activation === 'tanh')).toBe(true);
+    expect(net.layers[2].neurons.every((n) => n.activation === 'linear')).toBe(true);
+  });
+
   it('throws when given the wrong number of inputs', () => {
     const net = new MLP(3, [4, 2], seededRand(1));
     expect(() => net.forward([0.1, 0.2])).toThrow();
