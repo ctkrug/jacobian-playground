@@ -76,11 +76,16 @@ export function computeLayout(width: number, height: number, layerSizes: number[
   });
 }
 
+export interface HoveredNode {
+  layerIndex: number;
+  neuronIndex: number;
+}
+
 /** Draws every layer's neurons as gradient-colored nodes with connecting edges. */
 export function drawHeatmap(
   canvas: HTMLCanvasElement,
   layers: HeatmapLayer[],
-  options: { nodeRadius?: number } = {},
+  options: { nodeRadius?: number; hoveredNode?: HoveredNode | null } = {},
 ): void {
   const ctx = fitCanvasToContainer(canvas);
   const rect = canvas.getBoundingClientRect();
@@ -123,8 +128,12 @@ export function drawHeatmap(
       const { x, y } = positions[li][ni];
       const color = gradientToColor(neuron.grad, maxAbsGrad);
       const mag = Math.min(1, Math.abs(neuron.grad) / maxAbsGrad);
+      const isHovered = options.hoveredNode?.layerIndex === li && options.hoveredNode?.neuronIndex === ni;
 
-      if (mag > 0.05) {
+      if (isHovered) {
+        ctx.shadowColor = 'rgba(79, 209, 255, 0.85)';
+        ctx.shadowBlur = 20;
+      } else if (mag > 0.05) {
         ctx.shadowColor = neuron.grad >= 0 ? 'rgba(255, 180, 84, 0.6)' : 'rgba(91, 141, 238, 0.6)';
         ctx.shadowBlur = 12 * mag;
       } else {
@@ -133,12 +142,12 @@ export function drawHeatmap(
 
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+      ctx.arc(x, y, isHovered ? nodeRadius * 1.3 : nodeRadius, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      ctx.strokeStyle = 'rgba(232, 237, 247, 0.25)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = isHovered ? 'rgba(79, 209, 255, 0.9)' : 'rgba(232, 237, 247, 0.25)';
+      ctx.lineWidth = isHovered ? 2 : 1;
       ctx.stroke();
     });
   });
