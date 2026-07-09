@@ -4,7 +4,8 @@ import type { Value } from './autodiff/value';
 import { computeLayout, drawHeatmap, type HeatmapLayer, type NodePosition } from './viz/heatmap';
 import { buildHybridLayers, scheduleRipple, type RippleHandle } from './viz/ripple';
 import { findNearestEdge, type EdgeInfo } from './viz/edges';
-import { createEdgeTooltip } from './viz/tooltip';
+import { findNearestNode, type NodeHit } from './viz/nodeHit';
+import { createEdgeTooltip, formatNodeText } from './viz/tooltip';
 import { hasGradientSignFlip } from './viz/threshold';
 import { createActionButtons, createMuteToggle, createOutputSelector, createSliderPanel } from './viz/controls';
 import { SfxEngine } from './audio/sfx';
@@ -48,6 +49,8 @@ let prevLayers: HeatmapLayer[] = [];
 let pendingRipple: RippleHandle | null = null;
 let backpropTarget = 0;
 let currentEdges: EdgeInfo[] = [];
+let currentPositions: NodePosition[][] = [];
+let hoveredNode: NodeHit | null = null;
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -95,10 +98,12 @@ function recomputeAndDraw(): void {
   }
 
   const rect = canvas.getBoundingClientRect();
-  currentEdges = buildEdges(
-    computeLayout(rect.width, rect.height, nextLayers.map((l) => l.neurons.length)),
-    nextLayers.map((l) => l.neurons),
+  currentPositions = computeLayout(
+    rect.width,
+    rect.height,
+    nextLayers.map((l) => l.neurons.length),
   );
+  currentEdges = buildEdges(currentPositions, nextLayers.map((l) => l.neurons));
 
   // A drag can outrun a previous ripple; drop its pending frames so the
   // heatmap always converges on the latest input rather than showing a
@@ -173,14 +178,34 @@ canvas.addEventListener('mousemove', (event) => {
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  const nearest = findNearestEdge(currentEdges, x, y);
-  if (nearest) {
-    edgeTooltip.show(nearest, x + 12, y + 12);
+
+  const nodeHit = findNearestNode(currentPositions, x, y);
+  if (nodeHit) {
+    hoveredNode = nodeHit;
+    edgeTooltip.showText(formatNodeText(prevLayers[nodeHit.layerIndex].neurons[nodeHit.neuronIndex].grad), x + 12, y + 12);
+    drawHeatmap(canvas, prevLayers, { hoveredNode });
+    return;
+  }
+
+  if (hoveredNode) {
+    hoveredNode = null;
+    drawHeatmap(canvas, prevLayers, { hoveredNode });
+  }
+
+  const edgeHit = findNearestEdge(currentEdges, x, y);
+  if (edgeHit) {
+    edgeTooltip.show(edgeHit, x + 12, y + 12);
   } else {
     edgeTooltip.hide();
   }
 });
-canvas.addEventListener('mouseleave', () => edgeTooltip.hide());
+canvas.addEventListener('mouseleave', () => {
+  edgeTooltip.hide();
+  if (hoveredNode) {
+    hoveredNode = null;
+    drawHeatmap(canvas, prevLayers, { hoveredNode });
+  }
+});
 
 window.addEventListener('resize', recomputeAndDraw);
 
