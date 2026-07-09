@@ -125,6 +125,22 @@ describe('fitCanvasToContainer', () => {
 
     expect(() => fitCanvasToContainer(canvas)).toThrow('2d canvas context unavailable');
   });
+
+  it('does not reassign the backing store when it already matches (avoids an implicit clear)', () => {
+    const { canvas } = stubCanvas(200, 100);
+    vi.stubGlobal('devicePixelRatio', 1);
+
+    fitCanvasToContainer(canvas);
+    const widthSetter = vi.spyOn(canvas, 'width', 'set');
+    const heightSetter = vi.spyOn(canvas, 'height', 'set');
+
+    fitCanvasToContainer(canvas);
+
+    expect(widthSetter).not.toHaveBeenCalled();
+    expect(heightSetter).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+  });
 });
 
 describe('drawHeatmap', () => {
