@@ -31,6 +31,16 @@ export class Neuron {
   parameters(): Value[] {
     return [...this.weights, this.bias];
   }
+
+  /** Reinitializes this neuron's weights in place, matching the constructor's draw order. */
+  randomize(rand: () => number): void {
+    this.weights.forEach((w) => {
+      w.data = rand() * 2 - 1;
+      w.grad = 0;
+    });
+    this.bias.data = 0;
+    this.bias.grad = 0;
+  }
 }
 
 export class Layer {
@@ -53,6 +63,10 @@ export class Layer {
 
   parameters(): Value[] {
     return this.neurons.flatMap((n) => n.parameters());
+  }
+
+  randomize(rand: () => number): void {
+    this.neurons.forEach((n) => n.randomize(rand));
   }
 }
 
@@ -96,5 +110,14 @@ export class MLP {
 
   parameters(): Value[] {
     return this.layers.flatMap((l) => l.parameters());
+  }
+
+  /**
+   * Reinitializes every weight in place, in the same layer/neuron/weight order the
+   * constructor draws in — calling this with the same `rand` sequence used at
+   * construction time reproduces the original weights exactly (used for "reset").
+   */
+  randomize(rand: () => number): void {
+    this.layers.forEach((l) => l.randomize(rand));
   }
 }
