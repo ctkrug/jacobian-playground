@@ -58,3 +58,44 @@ export function createSliderPanel(specs: SliderSpec[]): SliderPanel {
     },
   };
 }
+
+export interface OutputSelector {
+  element: HTMLElement;
+  onChange(handler: (index: number) => void): void;
+}
+
+/** Builds a themed dropdown listing every output neuron to backprop from. */
+export function createOutputSelector(labels: string[], selectedIndex: number): OutputSelector {
+  const container = document.createElement('div');
+  container.className = 'output-selector';
+
+  const heading = document.createElement('h2');
+  heading.textContent = 'Backprop target';
+  container.appendChild(heading);
+
+  const select = document.createElement('select');
+  select.className = 'output-selector__select';
+  select.setAttribute('aria-label', 'Output neuron to backpropagate from');
+
+  labels.forEach((label, index) => {
+    const option = document.createElement('option');
+    option.value = String(index);
+    option.textContent = label;
+    option.selected = index === selectedIndex;
+    select.appendChild(option);
+  });
+
+  const listeners: Array<(index: number) => void> = [];
+  select.addEventListener('change', () => {
+    listeners.forEach((fn) => fn(Number(select.value)));
+  });
+
+  container.appendChild(select);
+
+  return {
+    element: container,
+    onChange(handler) {
+      listeners.push(handler);
+    },
+  };
+}
