@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createOutputSelector, createSliderPanel } from './controls';
+import { createActionButtons, createOutputSelector, createSliderPanel } from './controls';
 
 describe('createSliderPanel', () => {
   it('renders one range input per spec, initialized to its value', () => {
@@ -64,5 +64,39 @@ describe('createOutputSelector', () => {
     const selector = createOutputSelector(['y0'], 0);
     const options = selector.element.querySelectorAll('option');
     expect(options).toHaveLength(1);
+  });
+});
+
+describe('createActionButtons', () => {
+  it('renders one button per spec with its label', () => {
+    const buttons = createActionButtons([
+      { id: 'randomize', label: 'Randomize' },
+      { id: 'reset', label: 'Reset' },
+    ]);
+
+    const buttonEls = buttons.element.querySelectorAll('button');
+    expect(buttonEls).toHaveLength(2);
+    expect(buttonEls[0].textContent).toBe('Randomize');
+    expect(buttonEls[1].textContent).toBe('Reset');
+  });
+
+  it('notifies onClick handlers with the clicked button id', () => {
+    const buttons = createActionButtons([
+      { id: 'randomize', label: 'Randomize' },
+      { id: 'reset', label: 'Reset' },
+    ]);
+    const handler = vi.fn();
+    buttons.onClick(handler);
+
+    const buttonEls = buttons.element.querySelectorAll('button');
+    (buttonEls[1] as HTMLButtonElement).dispatchEvent(new MouseEvent('click'));
+
+    expect(handler).toHaveBeenCalledWith('reset');
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders no buttons for an empty spec list without throwing', () => {
+    const buttons = createActionButtons([]);
+    expect(buttons.element.querySelectorAll('button')).toHaveLength(0);
   });
 });
