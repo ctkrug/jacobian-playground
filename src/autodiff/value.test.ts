@@ -108,4 +108,14 @@ describe('Value autodiff engine', () => {
     expect(x.grad).toBe(0);
     expect(out.grad).toBe(0);
   });
+
+  it('zeroGrad visits a diamond-shaped graph node only once', () => {
+    const x = new Value(2);
+    const out = x.add(x); // x reachable via both operand slots of the same node
+    out.backward();
+    expect(x.grad).not.toBe(0);
+
+    expect(() => out.zeroGrad()).not.toThrow();
+    expect(x.grad).toBe(0);
+  });
 });
