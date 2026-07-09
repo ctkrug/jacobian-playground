@@ -61,6 +61,21 @@ function drawGrid(ctx: CanvasRenderingContext2D, width: number, height: number):
   }
 }
 
+export interface NodePosition {
+  x: number;
+  y: number;
+}
+
+/** Computes each neuron's canvas position for a given viewport size and per-layer neuron counts. */
+export function computeLayout(width: number, height: number, layerSizes: number[]): NodePosition[][] {
+  const colWidth = width / (layerSizes.length + 1);
+  return layerSizes.map((count, li) => {
+    const x = colWidth * (li + 1);
+    const rowHeight = height / (count + 1);
+    return Array.from({ length: count }, (_, ni) => ({ x, y: rowHeight * (ni + 1) }));
+  });
+}
+
 /** Draws every layer's neurons as gradient-colored nodes with connecting edges. */
 export function drawHeatmap(
   canvas: HTMLCanvasElement,
@@ -83,12 +98,11 @@ export function drawHeatmap(
     ...layers.flatMap((layer) => layer.neurons.map((n) => Math.abs(n.grad))),
   );
 
-  const colWidth = width / (layers.length + 1);
-  const positions: { x: number; y: number }[][] = layers.map((layer, li) => {
-    const x = colWidth * (li + 1);
-    const rowHeight = height / (layer.neurons.length + 1);
-    return layer.neurons.map((_, ni) => ({ x, y: rowHeight * (ni + 1) }));
-  });
+  const positions = computeLayout(
+    width,
+    height,
+    layers.map((layer) => layer.neurons.length),
+  );
 
   // Edges first, so nodes render on top.
   for (let li = 1; li < positions.length; li += 1) {
