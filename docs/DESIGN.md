@@ -65,7 +65,7 @@ read even when the network itself is small.
 
 ## 4. Signature detail
 
-The wordmark reads as **"∂ Jacobian Playground"** — the partial-derivative
+The wordmark reads as **"∂ Backflow"** — the partial-derivative
 glyph `∂` is set large, in the accent cyan, with a subtle continuous glow
 pulse (4s cycle, paused under `prefers-reduced-motion`), doubling as the
 favicon monogram. It's the one piece of pure branding on the page, and it
