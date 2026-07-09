@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MLP } from './network';
+import { Value } from '../autodiff/value';
+import { MLP, Neuron } from './network';
 
 // Deterministic pseudo-random sequence so tests aren't flaky.
 function seededRand(seed: number): () => number {
@@ -85,5 +86,20 @@ describe('MLP', () => {
 
     net.randomize(seededRand(5));
     expect(net.parameters().every((p) => p.grad === 0)).toBe(true);
+  });
+});
+
+describe('Neuron', () => {
+  // MLP never constructs a 'relu' neuron today (hidden layers use tanh, the
+  // output layer is linear), but Neuron's activation is a public constructor
+  // parameter and applyActivation switches on 'relu' explicitly — cover it directly.
+  it('applies relu, zeroing negative pre-activation sums', () => {
+    const neuron = new Neuron(1, 'relu', seededRand(1));
+    neuron.weights[0].data = -2;
+    neuron.bias.data = 0;
+
+    const { pre, post } = neuron.forward([new Value(1)]);
+    expect(pre.data).toBeLessThan(0);
+    expect(post.data).toBe(0);
   });
 });
