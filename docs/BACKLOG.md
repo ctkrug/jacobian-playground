@@ -44,7 +44,7 @@ it; taken together, this epic alone delivers the full wow moment.
 
 ## Epic 2 — Exploration & insight tools
 
-- [ ] **2.1 — Selectable target output to backprop from**
+- [x] **2.1 — Selectable target output to backprop from**
   - A control lists every output neuron; selecting one re-runs backward()
     from that output and repaints the heatmap accordingly.
   - The currently selected target is visually indicated in the control.
