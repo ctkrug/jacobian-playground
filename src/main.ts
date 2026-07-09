@@ -219,7 +219,6 @@ canvas.addEventListener('mouseleave', () => {
 // keys step a focus cursor between neurons so the same gradient readout is
 // reachable without a pointer.
 canvas.tabIndex = 0;
-canvas.setAttribute('role', 'img');
 canvas.setAttribute(
   'aria-label',
   "Network gradient heatmap. Focus and use arrow keys to inspect each neuron's gradient; Escape to dismiss.",
